@@ -13,6 +13,8 @@ function [hValues] = AntColonySystem(iniCoords, iniSol, paths, cellAdjacencies, 
     alpha = 1;          % distance param
     beta = 1;           % pheromone param
     
+    hValues = zeros(1, layers);
+    
     % generate possible solution matrix on each edge
     pathVector = zeros(numChoices, layers);
     for i=1:layers
@@ -25,7 +27,10 @@ function [hValues] = AntColonySystem(iniCoords, iniSol, paths, cellAdjacencies, 
     phmone
     pathVector
     
-    distVector = calculateDistanceVector(numChoices, iniCoords(1,:), pathVector(:,1), paths, cellAdjacencies, startingAdjacencies);
+    currPos = iniCoords(1,:);
+    
+    [boundary, distVector] = calculateDistanceVector(numChoices, currPos, pathVector(:,1), paths, cellAdjacencies, startingAdjacencies);
+    boundary
     distVector
     
     decisionVec = zeros(numChoices, 1);
@@ -35,9 +40,23 @@ function [hValues] = AntColonySystem(iniCoords, iniSol, paths, cellAdjacencies, 
     
     decisionVec
     
+    % choose a node to take and update the current position
+    [maxProb, maxIndex] = max(decisionVec);
+    % should I implement generating a random value and check if maxProb>r ?
+    
+    chosen = pathVector(maxIndex, 1);
+    hValues(1) = chosen;
+    currPos = updateCurrPos(boundary, chosen);
+    
+    
 end
 
-function [distVec] = calculateDistanceVector(numChoices, fromCoord, nodeHeights, paths, cellAdjacencies, startingAdjacencies)
+function[pos] = updateCurrPos(boundary, chosen)
+    pos(1) = boundary(1);
+    pos(2) = boundary(2) + (boundary(3) - boundary(2)) * chosen;
+end
+
+function [boundary, distVec] = calculateDistanceVector(numChoices, fromCoord, nodeHeights, paths, cellAdjacencies, startingAdjacencies)
     boundary = cellAdjacencies(:,startingAdjacencies(1),paths(1));
     from = fromCoord;
     distVec = zeros(numChoices, 1);
