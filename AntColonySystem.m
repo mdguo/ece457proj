@@ -10,6 +10,8 @@ function [hValues] = AntColonySystem(iniCoords, iniSol, paths, cellAdjacencies, 
     layers = nnz(paths);% number of nodes each ant needs to travel
     phmone = ones(numChoices, layers) * (0.1) .* rand(1);
     decay = 0.7;        % pheromone delay param
+    alpha = 1;          % distance param
+    beta = 1;           % pheromone param
     
     % generate possible solution matrix on each edge
     pathVector = zeros(numChoices, layers);
@@ -23,16 +25,35 @@ function [hValues] = AntColonySystem(iniCoords, iniSol, paths, cellAdjacencies, 
     phmone
     pathVector
     
-    decisionVector = calculateDecisonVector(iniCoords(1), pathVector(:,1), phmone(:,1));
+    distVector = calculateDistanceVector(numChoices, iniCoords(1,:), pathVector(:,1), paths, cellAdjacencies, startingAdjacencies);
+    distVector
+    
+    decisionVec = zeros(numChoices, 1);
+    for pathNum = 1:numChoices
+        decisionVec(pathNum) = calcProbability(pathNum, distVector, alpha, phmone(:,1), beta);
+    end
+    
+    decisionVec
     
 end
 
-function [decisionVec] = calculateDecisionVector(iniCoords, nodeHeights, phmone)
-    from = iniCoords(1,:);
-    to = 
+function [distVec] = calculateDistanceVector(numChoices, fromCoord, nodeHeights, paths, cellAdjacencies, startingAdjacencies)
+    boundary = cellAdjacencies(:,startingAdjacencies(1),paths(1));
+    from = fromCoord;
+    distVec = zeros(numChoices, 1);
+    
+    for hIndex=1:numChoices
+        to = [boundary(1), boundary(2) + (boundary(3) - boundary(2))*nodeHeights(hIndex)];
+        distVec(hIndex) = calcDistance(from, to);
+    end
 end
 
 function [distance] = calcDistance(p1, p2)
     distance = sqrt((p1(1)-p2(1))^2+(p1(2)-p2(2))^2);
 end
 
+function [probability] = calcProbability(pathNum, distVec, distParam, phmoneVal, phmoneParam)
+    numer = phmoneVal(pathNum)^phmoneParam / distVec(pathNum)^distParam;
+    denom = sum( phmoneVal .^phmoneParam ./ distVec .^distParam );
+    probability = numer / denom;
+end
