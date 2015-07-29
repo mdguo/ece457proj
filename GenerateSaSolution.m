@@ -1,11 +1,11 @@
-function [ minimum, fval, total ] = GenerateSaSolution( hValues, paths,cellAdjacencies,startingAdjacencies,startingCoords,goalCoord, initCost )
+function [ minimum, fval, total, costGraph ] = GenerateSaSolution( hValues, paths,cellAdjacencies,startingAdjacencies,startingCoords,goalCoord, initCost )
     cool = @(T) (.90*T);
     %newSol = @()  rand(nnz(paths),1);
     InitTemp = 1000;
     StopTemp = 1e-8;
-    MaxTries = 4000;
+    MaxTries = 2000;
     MaxSuccess = 20;
-    MaxCosecRejects = 1000;
+    MaxCosecRejects = 2000;
     unoptimizedHValues = hValues;
     k = 1; %Boltzman's Constant
     y = 1000; %Energy Difference Constant 
@@ -22,15 +22,15 @@ function [ minimum, fval, total ] = GenerateSaSolution( hValues, paths,cellAdjac
 
     while ~finished;
         iterations = iterations+1;
-        
+        total = total + 1;
+        costGraph(total)=oldEnergy;
+        %iterations
         if iterations >= MaxTries || success >= MaxSuccess || consec >= MaxCosecRejects;
             if T < StopTemp || consec >= MaxCosecRejects;
                 finished = 1;
-                total = total + iterations;
                 break;
             else
                 T = cool(T);
-                total = total + iterations;
                 iterations = 0;
                 success = 0;
             end
@@ -58,6 +58,8 @@ function [ minimum, fval, total ] = GenerateSaSolution( hValues, paths,cellAdjac
 
     minimum = prevSol;
     fval = oldEnergy;
+    figure
+    plot(costGraph)
 
 end
 
