@@ -8,8 +8,8 @@ function [cost, bestValues] = AntColonySystem(iniCoords, goalCoord, iniSol, path
     numChoices = 20;     % number of choices to take towards next path
     spread = 0.8;       % degree of spread from initial solution
     layers = nnz(paths);% number of nodes each ant needs to travel
-    phmone = ones(numChoices, layers) * (0.15) .* rand(1);
-    decay = 0.6;        % pheromone delay param
+    phmone = ones(numChoices, layers) * (0.3) .* rand(1);
+    decay = 0.8;        % pheromone delay param
     beta = 1;           % relative param phmone/visibility
     r_o = 0.5;          % probability exploration param    
     
@@ -29,13 +29,14 @@ function [cost, bestValues] = AntColonySystem(iniCoords, goalCoord, iniSol, path
     
     %phmone
     %pathMatrix
+    currSol = iniSol;
     for it = 1 : maxIteration
         for antNum = 1: numAnts
             % 3 stages
             % first stage, from iniCoord to path(1)
             
             % arg max method - closest to current solution
-            visibilityVector = calcNodeVisibility(numChoices, iniSol(1), pathMatrix(:,1));
+            visibilityVector = calcNodeVisibility(numChoices, currSol(1), pathMatrix(:,1));
             argMaxVec = calcArgMax(numChoices, phmone(:,1), visibilityVector, beta);
 
             % roulette wheel method - closest distance
@@ -60,7 +61,7 @@ function [cost, bestValues] = AntColonySystem(iniCoords, goalCoord, iniSol, path
             % stage 2, from path(1) to path(end)
             for j = 2:size(paths, 2)
                 % arg max method - closest to current solution
-                visibilityVector = calcNodeVisibility(numChoices, iniSol(j), pathMatrix(:,j));
+                visibilityVector = calcNodeVisibility(numChoices, currSol(j), pathMatrix(:,j));
                 argMaxVec = calcArgMax(numChoices, phmone(:,j), visibilityVector, beta);
 
                 % roulette wheel method - closest distance
@@ -99,6 +100,7 @@ function [cost, bestValues] = AntColonySystem(iniCoords, goalCoord, iniSol, path
         
         cost = bestCost;
         bestValues = hValues(bestAntNum,:);
+        currSol = bestValues;
     end    % end iteration
     
     bestValues
