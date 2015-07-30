@@ -102,7 +102,7 @@ function [cost, bestValues] = AntColonySystem(iniCoords, goalCoord, iniSol, path
         % pheromone reinforcement on iteration best route
         phmone = (1-p).* phmone;
         for l=1:layers
-            phmone( pathIndex(l), l) = decay * 1/bestCost;
+            phmone( pathIndex(l), l) = p * 1/bestCost;
         end
         
         cost = bestCost;
