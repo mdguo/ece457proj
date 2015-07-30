@@ -4,14 +4,15 @@ function [cost, bestValues] = AntColonySystem(iniCoords, goalCoord, iniSol, path
     
     % initialize ACO parameters
     numAnts = 10;        % number of ants
-    maxIteration = 120;   % max number of iterations
+    maxIteration = 120;  % max number of iterations
     numChoices = 20;     % number of choices to take towards next path
-    spread = 0.8;       % degree of spread from initial solution
+    spread = 0.8;        % degree of spread from initial solution
     layers = nnz(paths);% number of nodes each ant needs to travel
     phmone = ones(numChoices, layers) * (0.3) .* rand(1);
-    decay = 0.8;        % pheromone delay param
+    ph_o = 0.05;        % pheromone deposition for local update
+    p = 0.8;            % pheromone delay param
     beta = 1;           % relative param phmone/visibility
-    r_o = 0.5;          % probability exploration param    
+    r_o = 0.5;          % probability exploration param
     
     % possible hValue solution matrix on each edge
     pathMatrix = zeros(numChoices, layers);
@@ -57,6 +58,9 @@ function [cost, bestValues] = AntColonySystem(iniCoords, goalCoord, iniSol, path
             hIndex(antNum, 1) = maxIndex;
             hValues(antNum, 1) = chosen;
             currPos = updateCurrPos(boundary, chosen);
+            
+            % local pheromone update
+            phmone(maxIndex,1) = (1-p)*phmone(maxIndex,1) + p*ph_o;
 
             % stage 2, from path(1) to path(end)
             for j = 2:size(paths, 2)
@@ -80,6 +84,9 @@ function [cost, bestValues] = AntColonySystem(iniCoords, goalCoord, iniSol, path
                 hIndex(antNum, j) = maxIndex;
                 hValues(antNum, j) = chosen;
                 currPos = updateCurrPos(boundary, chosen);
+                
+                % local pheromone update
+                phmone(maxIndex,j) = (1-p)*phmone(maxIndex,j) + p*ph_o;
             end
         end    % end ant
         
@@ -92,8 +99,8 @@ function [cost, bestValues] = AntColonySystem(iniCoords, goalCoord, iniSol, path
         [bestCost, bestAntNum] = min(totCost);
         pathIndex = hIndex(bestAntNum,:);
 
-        % pheromone deposition and evaporation
-        phmone = (1-decay).* phmone;
+        % pheromone reinforcement on iteration best route
+        phmone = (1-p).* phmone;
         for l=1:layers
             phmone( pathIndex(l), l) = decay * 1/bestCost;
         end
