@@ -1,66 +1,101 @@
 function [ minimum, fval, total, costGraph ] = GenerateSaSolution( hValues, paths,cellAdjacencies,startingAdjacencies,startingCoords,goalCoord, initCost )
-    cool = @(T) (.90*T);
-    %newSol = @()  rand(nnz(paths),1);
-    InitTemp = 1000;
-    StopTemp = 1e-8;
-    MaxTries = 2000;
-    MaxSuccess = 20;
-    MaxCosecRejects = 2000;
-    unoptimizedHValues = hValues;
-    k = 1; %Boltzman's Constant
-    y = 1000; %Energy Difference Constant 
+
+def = struct(...
+        'CoolSched',@(T) (.8*T),...
+        'Generator',@(X)  rand(numel(X),1),...
+        'InitTemp',5,...
+        'MaxConsRej',100*numel(hValues),...
+        'MaxSuccess',2*numel(hValues),...
+        'MaxTries',10*numel(hValues),...
+        'StopTemp',1e-4,...
+        'StopVal',-Inf,...
+        'Verbosity',0);
     
-    iterations = 0;
-    total = 0;
-    finished = 0;
-    success = 0;
-    consec = 0;
-    T = InitTemp;
-    oldEnergy = GetTotalPathCost(hValues, paths, cellAdjacencies, startingAdjacencies, startingCoords, goalCoord);
-    current = unoptimizedHValues;
-    prevSol = unoptimizedHValues;
+    fs = {'CoolSched','Generator','InitTemp','MaxConsRej',...
+        'MaxSuccess','MaxTries','StopTemp','StopVal','Verbosity'};
+    for nm=1:length(fs)
+        options.(fs{nm}) = def.(fs{nm});
+    end 
+    
+% main settings
+loss = @(X) GetTotalPathCost(X, paths, cellAdjacencies, startingAdjacencies, startingCoords, goalCoord);
+parent = hValues;
+newsol = options.Generator;      % neighborhood space function
+Tinit = options.InitTemp;        % initial temp
+minT = options.StopTemp;         % stopping temp
+cool = options.CoolSched;        % annealing schedule
+minF = options.StopVal;
+max_consec_rejections = options.MaxConsRej;
+max_try = options.MaxTries;
+max_success = options.MaxSuccess;
+report = options.Verbosity;
+k = 1;                           % boltzmann constant
 
-    while ~finished;
-        iterations = iterations+1;
-        total = total + 1;
-        costGraph(total)=oldEnergy;
-        %iterations
-        if iterations >= MaxTries || success >= MaxSuccess || consec >= MaxCosecRejects;
-            if T < StopTemp || consec >= MaxCosecRejects;
-                finished = 1;
-                break;
-            else
-                T = cool(T);
-                iterations = 0;
-                success = 0;
-            end
-        end
-        
-        current = newSol(current);
-        newEnergy = GetTotalPathCost(current, paths, cellAdjacencies, startingAdjacencies, startingCoords, goalCoord);
-        if (newEnergy < oldEnergy);
-            prevSol = current;
-            oldEnergy = newEnergy;
-            success = success + 1;
-            cosec = 0;
+% counters etc
+itry = 0;
+success = 0;
+finished = 0;
+consec = 0;
+T = Tinit;
+initenergy = loss(parent);
+oldenergy = initenergy;
+total = 0;
+if report==2, fprintf(1,'\n  T = %7.5f, loss = %10.5f\n',T,oldenergy); end
+
+while ~finished;
+    itry = itry+1; % just an iteration counter
+    total = total + 1;
+    costGraph(total)=oldenergy;
+    current = parent; 
+    
+    % % Stop / decrement T criteria
+    if itry >= max_try || success >= max_success;
+        if T < minT || consec >= max_consec_rejections;
+            finished = 1;
+            %total = total + itry;
+            break;
         else
-            if (rand < exp((oldEnergy - newEnergy)/(k*T)));
-               prevSol = current;
-               oldEnergy = newEnergy;
-               success = success + 1;
-               cosec = 0;
-            else
-                cosec = cosec + 1;
+            T = cool(T);  % decrease T according to cooling schedule
+            if report==2, % output
+                fprintf(1,'  T = %7.5f, loss = %10.5f\n',T,oldenergy);
             end
+            %total = total + itry;
+            itry = 1;
+            success = 1;
         end
-        
     end
+    
+    newparam = newSol(current);
+    %newparam = newsol(current);
+    newenergy = loss(newparam);
+    
+    if (newenergy < minF),
+        parent = newparam; 
+        oldenergy = newenergy;
+        break
+    end
+    
+    if (oldenergy-newenergy > 1e-6)
+        parent = newparam;
+        oldenergy = newenergy;
+        success = success+1;
+        consec = 0;
+    else
+        if (rand < exp( (oldenergy-newenergy)/(k*T) ));
+            parent = newparam;
+            oldenergy = newenergy;
+            success = success+1;
+        else
+            consec = consec+1;
+        end
+    end
+end
 
-    minimum = prevSol;
-    fval = oldEnergy;
-    figure
-    plot(costGraph)
-
+minimum = parent;
+fval = oldenergy;
+figure
+plot(costGraph)
+    
 end
 
 function [newVal] = newSol(hValues)
