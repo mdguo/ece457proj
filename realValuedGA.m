@@ -8,7 +8,7 @@
 %_______________________________________________________
 % I Setup the GA
 
-function realValuedGA(fieldDimensions, obstacles, startingCoords, goalCoord, paths, hValues, cellAdjacencies, startingAdjacencies)
+function [cost, par] = realValuedGA(fieldDimensions, obstacles, startingCoords, goalCoord, paths, hValues, cellAdjacencies, startingAdjacencies)
 
 ff='testfunction'; % objective function
 npar=numel(hValues); % number of optimization variables
