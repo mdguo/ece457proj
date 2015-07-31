@@ -193,6 +193,19 @@ function [previous goalPosPrevious] = Dijkstra(cellAdjacencies, finishingAdjacen
 
             distance(j) = calcDistance(from, to);
             previous(j) = startingAdjacency;
+            
+            %if ending point is in this cell determin its distance
+            if j == finishingAdjacency
+                from = [row(j,1), row(j,2) + (row(j,3)-row(j,2))/2];
+                to = goalCoord;
+
+                goalPointAlt = distance(j) + calcDistance(from, to);
+
+                if goalPointAlt < goalPosDistance
+                    goalPosDistance = goalPointAlt;
+                    goalPosPrevious = startingAdjacency;
+                end
+            end
         end
     end
     
@@ -263,7 +276,7 @@ function [path] = getPathFromPreviousDistanceVectors(previous, finishingAdjacenc
     path(1) = finishingAdjacency;
     next = path(1);
 
-    for j=1:nCells
+    for j=2:nCells
         if ~isnan(previous(next))
             path(j) = previous(next);
             next = path(j);
