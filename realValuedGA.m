@@ -15,7 +15,7 @@ npar=numel(hValues); % number of optimization variables
 varhi=1; varlo=0; % variable limits
 %_______________________________________________________
 % II Stopping criteria
-maxit=100; % max number of iterations
+maxit=1000; % max number of iterations
 mincost=-9999999; % minimum cost
 %_______________________________________________________
 % III GA parameters
@@ -84,10 +84,8 @@ par(keep+ix(ic),xp(ic))=par(ma(ic),xp(ic))-r(ic).*xy;
 par(keep+ix(ic)+1,xp(ic))=par(pa(ic),xp(ic))+r(ic).*xy;
 % 2nd
 if xp(ic)<npar % crossover when last variable not selected
-%par(keep+ix(ic),:)=[par(keep+ix(ic),1:xp(ic))
-%par(keep+ix(ic)+1,xp(ic)+1:npar)];
-%par(keep+ix(ic)+1,:)=[par(keep+ix(ic)+1,1:xp(ic))
-%par(keep+ix(ic),xp(ic)+1:npar)];
+par(keep+ix(ic)+1,xp(ic)+1:npar);
+par(keep+ix(ic),xp(ic)+1:npar);
 end % if
 end
 %_______________________________________________________
